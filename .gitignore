@@ -1,2 +1,33 @@
 .venv
 .env
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Excel
+*.xls
+*.xlsx
+*.xlsm
+*.xlsb
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# uv
+uv.lock
