@@ -1,6 +1,5 @@
 import asyncio
 import logging
-import sys
 import argparse
 from pathlib import Path
 
@@ -8,7 +7,7 @@ from automation_server_client import AutomationServer, Workqueue, WorkItemError,
 from kmd_nexus_client.manager import NexusClientManager
 from odk_tools.tracking import Tracker
 from odk_tools.reporting import report
-from proces.excel_service import ExcelService
+from proces.excel_service import afkode_excel, find_excel_fil
 from proces.nexus_service import NexusService
 from proces.models import Medarbejder, Opgavetype
 
@@ -17,20 +16,23 @@ tracker: Tracker
 
 procesnavn = "Flyt medarbejder i Nexus"
 
-async def populate_queue(workqueue: Workqueue, excel_sti:str):
+async def populate_queue(workqueue: Workqueue, mappe_sti: str):
     logger = logging.getLogger(__name__)
+    
+    excel_fil_sti = find_excel_fil(mappe_sti)
+    
+    if excel_fil_sti == "":
+        return
+    
+    medarbejdere: list[Medarbejder]
+    medarbejdere = afkode_excel(excel_fil_sti)
+    
+    Path(excel_fil_sti).parent.joinpath("Indlæst.txt").write_text("", encoding="utf-8")
 
-    excel_service = ExcelService(excel_sti)
-    
-    medarbejdere: list[Medarbejder] = excel_service.afkode_excel()
-    
     for medarbejder in medarbejdere:
-        workqueue.add_item(medarbejder.model_dump(), medarbejder.initialer)
-    
-    Path(excel_sti).parent.joinpath("Indlæst.txt").write_text("", encoding="utf-8")
+        workqueue.add_item(medarbejder.model_dump(), medarbejder.initialer)   
 
-
-async def process_workqueue(workqueue: Workqueue):
+async def process_workqueue(workqueue: Workqueue, mappe_sti: str):
     logger = logging.getLogger(__name__)
     nexus_service = NexusService(nexus)
     
@@ -79,6 +81,12 @@ async def process_workqueue(workqueue: Workqueue):
                 )
                 logger.error(f"Error processing item: {medarbejder.initialer}. Error: {e}")
                 item.fail(str(e))
+    #Håndter overskriv fil og lig ny fil omkring opgave gennemført
+    excel_sti = find_excel_fil(mappe_sti)   
+    tekst_fil = Path(excel_sti).parent.joinpath("Indlæst.txt")
+    
+    if tekst_fil.exists() and tekst_fil.name == "Indlæst.txt":
+        tekst_fil.rename("Kørsel Gennemført.txt")
 
 
 if __name__ == "__main__":
@@ -97,9 +105,9 @@ if __name__ == "__main__":
     )
     
     parser.add_argument(
-        "--excel-file",
+        "--folder-path",
         type=Path,
-        default=Path("Excel.xlsx"),
+        default=Path("test_filer"),
     )
     
     args = parser.parse_args()
@@ -122,8 +130,8 @@ if __name__ == "__main__":
     # Queue management
     if args.queue:
         workqueue.clear_workqueue(WorkItemStatus.NEW)
-        asyncio.run(populate_queue(workqueue, args.excel_file))
+        asyncio.run(populate_queue(workqueue, args.folder_path))
         exit(0)
 
     # Process workqueue
-    asyncio.run(process_workqueue(workqueue))
+    asyncio.run(process_workqueue(workqueue, args.folder_path))
