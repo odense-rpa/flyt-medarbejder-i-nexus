@@ -7,7 +7,7 @@ from automation_server_client import AutomationServer, Workqueue, WorkItemError,
 from kmd_nexus_client.manager import NexusClientManager
 from odk_tools.tracking import Tracker
 from odk_tools.reporting import report
-from proces.excel_service import afkode_excel, find_excel_fil
+from proces.excel_service import afkode_excel, find_excel_fil, find_tekst_fil
 from proces.nexus_service import NexusService
 from proces.models import Medarbejder, Opgavetype
 
@@ -81,13 +81,20 @@ async def process_workqueue(workqueue: Workqueue, mappe_sti: str):
                 )
                 logger.error(f"Error processing item: {medarbejder.initialer}. Error: {e}")
                 item.fail(str(e))
-    #Håndter overskriv fil og lig ny fil omkring opgave gennemført
-    excel_sti = find_excel_fil(mappe_sti)   
-    tekst_fil = Path(excel_sti).parent.joinpath("Indlæst.txt")
+    #Håndter overskriv fil og lig ny fil, omkring opgave gennemført
+    tekst_fil = find_tekst_fil(mappe_sti)
     
-    if tekst_fil.exists() and tekst_fil.name == "Indlæst.txt":
-        tekst_fil.rename("Kørsel Gennemført.txt")
-
+    if tekst_fil is not None and tekst_fil.name == "Indlæst.txt":
+        tekst_fil.rename(tekst_fil.parent / "Kørsel Gennemført.txt")
+    
+    report(
+        "flyt_medarbejder_i_nexus",
+                    "Kørsel gennemført",
+                    {
+                        "Kørsel gennemført": "Kørsel afsluttet"
+                    }
+    )
+    
 
 if __name__ == "__main__":
     logging.basicConfig(

@@ -74,3 +74,24 @@ def find_excel_fil(mappe_sti) -> str | Path:
     if len(excel_fil) > 1:
         raise ValueError("Mere end 1 excel-fil fundet")
     return excel_fil[0]
+
+def find_tekst_fil(mappe_sti) -> Path | None:
+    over_mappe = Path(mappe_sti)
+    if not over_mappe.exists() or not over_mappe.is_dir():
+        raise ValueError(f"Mappen findes ikke eller er ikke en mappe: {over_mappe}")
+
+    
+    # Find only direct child folders inside the provided path (not the path itself).
+    mapper = [sti for sti in over_mappe.iterdir() if sti.is_dir()]
+    
+    if len(mapper) > 1:
+        raise ValueError("Mere end en opgavemappe i hovedmappe")
+    
+    mappe = mapper[0]
+    
+    teskt_fil = [*mappe.glob("*.txt")]
+    
+    if len(teskt_fil) >= 1:
+        return teskt_fil[0]
+    else:
+        return None
