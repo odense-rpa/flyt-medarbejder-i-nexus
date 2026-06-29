@@ -61,6 +61,9 @@ def find_excel_fil(mappe_sti) -> str | Path:
     if len(mapper) > 1:
         raise ValueError("Mere end en opgavemappe i hovedmappe")
     
+    if len(mapper) == 0:
+        return ""
+    
     mappe = mapper[0]
     
     teskt_fil = [*mappe.glob("*.txt")]
