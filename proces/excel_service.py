@@ -1,6 +1,7 @@
 import openpyxl
 from pathlib import Path
 from proces.models import Medarbejder, Opgavetype
+import logging
 
 
 def afkode_excel(excel_sti: str | Path) -> list[Medarbejder]:
@@ -50,25 +51,30 @@ def afkode_excel(excel_sti: str | Path) -> list[Medarbejder]:
     return medarbejdere
 
 def find_excel_fil(mappe_sti) -> str | Path:
+    logger = logging.getLogger(__name__)
+    
     over_mappe = Path(mappe_sti)
     if not over_mappe.exists() or not over_mappe.is_dir():
         raise ValueError(f"Mappen findes ikke eller er ikke en mappe: {over_mappe}")
-
     
     # Find only direct child folders inside the provided path (not the path itself).
     mapper = [sti for sti in over_mappe.iterdir() if sti.is_dir()]
     
     if len(mapper) > 1:
+        logger.error("Mere end en mappe fundet, smider fejl og stopper")
         raise ValueError("Mere end en opgavemappe i hovedmappe")
     
     if len(mapper) == 0:
+        logger.info("Ingen mappe fundet, går ud fra der ikke ligger nogle opgaver, stopper")
         return ""
     
+    logger.info("Kun en mappe fundet")
     mappe = mapper[0]
     
     teskt_fil = [*mappe.glob("*.txt")]
     
     if len(teskt_fil) >= 1:
+        logger.info("Tekst fil fundet, derfor går vi udfra at opgaveløsning er igang/afsluttet på dette opgavesæt")
         return ""
     
     excel_fil = [*mappe.glob("*.xlsx"), *mappe.glob("*.xlsm")]
