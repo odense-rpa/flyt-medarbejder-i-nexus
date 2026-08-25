@@ -69,7 +69,7 @@ async def process_workqueue(workqueue: Workqueue, mappe_sti: str):
                 else:
                     tracker.track_task(procesnavn)
                     
-            except WorkItemError as e:
+            except Exception as e:
                 # A WorkItemError represents a soft error that indicates the item should be passed to manual processing or a business logic fault                
                 report(
                     "flyt_medarbejder_i_nexus",
