@@ -8,6 +8,11 @@ class NexusService:
         self.nexus = nexus
     
     def tilføj_organisation_til_medarbejder(self, organisationsnavn:str, bruger:dict) -> str:
+
+        organisationer = self.nexus.organisationer.hent_organisationer_for_medarbejder(bruger)
+
+        if any(organisation["name"] == organisationsnavn for organisation in organisationer):
+            return ""
         
         organisation = self.nexus.organisationer.hent_organisation_ved_navn(organisationsnavn)
         if organisation is None:
