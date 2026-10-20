@@ -68,6 +68,18 @@ async def process_workqueue(workqueue: Workqueue, mappe_sti: str):
                     tracker.track_partial_task(procesnavn)
                 else:
                     tracker.track_task(procesnavn)
+
+            except WorkItemError as e:
+                report(
+                    "flyt_medarbejder_i_nexus",
+                    "Fejl",
+                    {
+                        "Initialer": medarbejder.initialer,
+                        "Fejl": str(e)
+                    }
+                )
+                logger.error(f"Error processing item: {medarbejder.initialer}. Error: {e}")
+                item.complete(str(e))
                     
             except Exception as e:
                 # A WorkItemError represents a soft error that indicates the item should be passed to manual processing or a business logic fault                
@@ -76,7 +88,7 @@ async def process_workqueue(workqueue: Workqueue, mappe_sti: str):
                     "Fejl",
                     {
                         "Initialer": medarbejder.initialer,
-                        "Fejl": e
+                        "Fejl": str(e)
                     }
                 )
                 logger.error(f"Error processing item: {medarbejder.initialer}. Error: {e}")
